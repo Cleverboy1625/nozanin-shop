@@ -1,0 +1,8 @@
+backend/.env
+backend/.env.*
+!backend/.env.example
+backend/.venv/
+backend/nozanin.db
+*.db
+__pycache__/
+*.pyc
