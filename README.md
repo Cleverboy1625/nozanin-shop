@@ -81,7 +81,8 @@ git clone <repository-url> nozanin-shop
 cd nozanin-shop/backend
 python3.11 -m venv ~/.virtualenvs/nozanin
 source ~/.virtualenvs/nozanin/bin/activate
-pip install -r requirements.txt
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 cp .env.example .env
 nano .env
 ```
@@ -89,6 +90,16 @@ nano .env
 `.env` ichida `BOT_TOKEN`, `ADMIN_TELEGRAM_IDS`, `WEBAPP_URL` va `WEBHOOK_SECRET`ni to'ldiring.
 Web app sozlamasidagi **WSGI configuration file** ichiga `backend/wsgi.py` mazmunini qo'ying.
 Virtualenv sifatida `/home/USERNAME/.virtualenvs/nozanin`ni tanlang.
+
+Agar logda `ModuleNotFoundError: No module named 'a2wsgi'` chiqsa, Web App'da tanlangan
+virtualenv'ni Bash Console'da faollashtirib dependency'larni qayta o'rnating:
+
+```bash
+source ~/.virtualenvs/nozanin/bin/activate
+cd ~/nozanin-shop/backend
+python -m pip install -r requirements.txt
+python -c "import a2wsgi; print('a2wsgi OK')"
+```
 
 Telegram webhook'ini PythonAnywhere Console'dan o'rnating:
 

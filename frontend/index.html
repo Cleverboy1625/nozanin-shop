@@ -165,8 +165,8 @@
 
 <script>
 /* =============== SOZLAMALAR =============== */
-// Backend API manzilini shu yerga yozing (masalan https://api.nozanin-shop.uz)
-const API_BASE = (window.NOZANIN_API_BASE || "").replace(/\/$/, "");
+// Backend API manzili
+const API_BASE = (window.NOZANIN_API_BASE || "https://nozanin-shop.onrender.com").replace(/\/$/, "");
 
 const tg = window.Telegram?.WebApp;
 try{ tg?.ready(); tg?.expand(); }catch(e){}
