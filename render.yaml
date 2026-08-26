@@ -3,7 +3,7 @@ services:
     name: nozanin-web
     runtime: docker
     dockerfilePath: ./Dockerfile
-    healthCheckPath: /api/health
+    healthCheckPath: /healthz
     envVars:
       - key: BOT_TOKEN
         sync: false

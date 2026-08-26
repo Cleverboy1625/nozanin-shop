@@ -82,6 +82,11 @@ def health():
     return {"status": "ok"}
 
 
+@app.get("/healthz")
+def healthz():
+    return {"status": "ok"}
+
+
 @app.post("/telegram/webhook")
 async def telegram_webhook(
     request: Request,
