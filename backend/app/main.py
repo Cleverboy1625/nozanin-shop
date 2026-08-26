@@ -94,8 +94,12 @@ async def telegram_webhook(
     return {"ok": True}
 
 
-frontend_dir = Path(__file__).resolve().parents[2] / "frontend"
-if frontend_dir.is_dir():
+frontend_candidates = (
+    Path(__file__).resolve().parents[1] / "frontend",
+    Path(__file__).resolve().parents[2] / "frontend",
+)
+frontend_dir = next((path for path in frontend_candidates if path.is_dir()), None)
+if frontend_dir:
     app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
 
 initialize_app()
