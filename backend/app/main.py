@@ -2,6 +2,7 @@ from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 
@@ -14,6 +15,7 @@ from bot.bot import bot, dp
 from aiogram.types import Update
 from seed_products import seed as seed_products
 
+logger = logging.getLogger(__name__)
 app = FastAPI(title="Nozanin Shop API")
 
 origins = [origin.strip() for origin in settings.CORS_ORIGINS.split(",") if origin.strip()] if settings.CORS_ORIGINS != "*" else ["*"]
@@ -69,9 +71,26 @@ def initialize_app():
         scheduler.start()
 
 
+async def configure_telegram_webhook():
+    if not settings.BOT_TOKEN:
+        logger.warning("BOT_TOKEN sozlanmagan, Telegram webhook o'rnatilmadi")
+        return
+    webhook_url = f"{settings.WEBAPP_URL}/telegram/webhook"
+    try:
+        await bot.set_webhook(
+            webhook_url,
+            secret_token=settings.WEBHOOK_SECRET or None,
+            drop_pending_updates=True,
+        )
+        logger.info("Telegram webhook o'rnatildi: %s", webhook_url)
+    except Exception:
+        logger.exception("Telegram webhook o'rnatilmadi: %s", webhook_url)
+
+
 @app.on_event("startup")
-def on_startup():
+async def on_startup():
     initialize_app()
+    await configure_telegram_webhook()
 
 
 @app.on_event("shutdown")
