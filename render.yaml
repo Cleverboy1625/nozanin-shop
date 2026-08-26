@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: nozanin-web
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: DATABASE_URL
+        value: sqlite:////app/nozanin.db
+      - key: WEBAPP_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: ADMIN_TELEGRAM_IDS
+        sync: false
+      - key: PRODUCT_CHAT_IDS
+        sync: false
+      - key: DAILY_REPORT_HOUR
+        value: "21"
+      - key: DAILY_REPORT_MINUTE
+        value: "0"
+      - key: TIMEZONE
+        value: Asia/Tashkent
+      - key: WEBHOOK_SECRET
+        generateValue: true

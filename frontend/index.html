@@ -166,7 +166,12 @@
 <script>
 /* =============== SOZLAMALAR =============== */
 // Backend API manzili
-const API_BASE = (window.NOZANIN_API_BASE || "https://nozanin-shop.onrender.com").replace(/\/$/, "");
+const API_BASE = (
+  window.NOZANIN_API_BASE ||
+  (location.hostname === "localhost" || location.hostname === "127.0.0.1"
+    ? "http://127.0.0.1:8010"
+    : window.location.origin)
+).replace(/\/$/, "");
 
 const tg = window.Telegram?.WebApp;
 try{ tg?.ready(); tg?.expand(); }catch(e){}

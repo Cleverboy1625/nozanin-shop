@@ -154,6 +154,31 @@ Space'ni hardware sozlamasida sleep'ni o'chirish yoki pullik/Always-on rejimdan 
    URL sifatida frontend domeningizni kiriting (masalan `https://shop.your-domain.com`).
 2. Shu bilan bot menyusidagi tugma orqali ham Mini App ochiladi (bot.py dagi `/start` tugmasi bilan bir xil ishlaydi).
 
+### Render Blueprint orqali deploy
+
+Repository rootidagi `render.yaml` bitta Docker web service yaratadi. Bu service frontendni `/` orqali,
+API'ni `/api/*` orqali va Telegram webhook'ni `/telegram/webhook` orqali beradi. Render'da quyidagi secret/env
+qiymatlarni kiriting:
+
+```text
+BOT_TOKEN=BotFather tokeni
+WEBAPP_URL=https://nozanin-web.onrender.com
+CORS_ORIGINS=https://nozanin-web.onrender.com
+ADMIN_TELEGRAM_IDS=5019578020
+PRODUCT_CHAT_IDS=5019578020
+```
+
+`WEBAPP_URL` va `CORS_ORIGINS` qiymatlarida Render dashboard ko'rsatgan haqiqiy service URL ishlatiladi.
+Deploy tugagach, webhook'ni bir marta o'rnating:
+
+```bash
+cd backend
+python -m bot.set_webhook https://nozanin-web.onrender.com/telegram/webhook
+```
+
+Webhook secret Render'dagi `WEBHOOK_SECRET` bilan bir xil bo'lishi kerak. Tekshiruv:
+`https://nozanin-web.onrender.com/api/health` manzili `{"status":"ok"}` qaytaradi.
+
 ---
 
 ## 6. Sotuvchi/admin qilib belgilash

@@ -5,9 +5,10 @@ services:
       dockerfile: Dockerfile
     env_file: ./backend/.env
     ports:
-      - "8000:8000"
+      - "8010:8000"
     volumes:
       - ./backend:/app
+      - ./frontend:/app/frontend:ro
     restart: unless-stopped
 
   bot:
