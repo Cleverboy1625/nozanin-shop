@@ -4,7 +4,7 @@ from pathlib import Path
 from app import models
 from app.database import Base, SessionLocal, engine
 
-IMAGE_DIR = Path('/app/../frontend/product-images')
+IMAGE_DIR = Path(__file__).resolve().parents[1] / 'frontend' / 'product-images'
 PRODUCTS = [
     ('Oversize sport futbolka', 'Yengil va kundalik uslub uchun qulay oversize futbolka.', '5f91b9d05f9a6fdcb4a387b1e06a3ae0.jpg'),
     ('Color Streetwear futbolka', 'Yorqin printli, zamonaviy streetwear uslubidagi futbolka.', '9ea436dabb5c8bee1e6bd251137606fa.jpg'),
