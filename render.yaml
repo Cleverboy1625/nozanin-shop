@@ -2,6 +2,7 @@ services:
   - type: web
     name: nozanin-web
     runtime: docker
+    rootDir: .
     dockerfilePath: ./Dockerfile
     healthCheckPath: /healthz
     envVars:
