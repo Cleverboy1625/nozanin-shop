@@ -12,6 +12,7 @@ from .report_service import send_daily_report_to_admins
 from .routers import products, orders, stats, admins
 from bot.bot import bot, dp
 from aiogram.types import Update
+from seed_products import seed as seed_products
 
 app = FastAPI(title="Nozanin Shop API")
 
@@ -56,6 +57,7 @@ def scheduled_daily_report():
 
 def initialize_app():
     Base.metadata.create_all(bind=engine)
+    seed_products()
     seed_admins()
     if not scheduler.running:
         scheduler.add_job(
