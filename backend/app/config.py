@@ -26,7 +26,7 @@ if DATABASE_URL == "sqlite:///./nozanin.db":
 class Settings:
     BOT_TOKEN: str = _env_str("BOT_TOKEN", "")
     DATABASE_URL: str = DATABASE_URL
-    WEBAPP_URL: str = _env_str("WEBAPP_URL", "https://example.com").rstrip("/")
+    WEBAPP_URL: str = _env_str("WEBAPP_URL", "https://nozanin-shoping.onrender.com").rstrip("/")
     ADMIN_TELEGRAM_IDS: str = _env_csv("ADMIN_TELEGRAM_IDS", "")  # vergul bilan ajratilgan
     PRODUCT_CHAT_IDS: str = _env_csv("PRODUCT_CHAT_IDS", "")  # kanal/gruppa ID yoki @username
     DAILY_REPORT_HOUR: int = int(_env_str("DAILY_REPORT_HOUR", "21"))
@@ -39,6 +39,10 @@ settings = Settings()
 
 def get_admin_ids_from_env():
     return [int(x.strip()) for x in settings.ADMIN_TELEGRAM_IDS.split(",") if x.strip() and x.strip().isdigit()]
+
+
+def is_configured_admin(telegram_user_id: int) -> bool:
+    return telegram_user_id in get_admin_ids_from_env()
 
 
 def get_product_chat_ids():

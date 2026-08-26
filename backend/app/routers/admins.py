@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..database import get_db
 from ..deps import get_current_user, require_admin
+from ..config import is_configured_admin
 
 router = APIRouter(prefix="/api/admins", tags=["admins"])
 
@@ -10,8 +11,8 @@ router = APIRouter(prefix="/api/admins", tags=["admins"])
 @router.get("/me", response_model=schemas.AdminCheckOut)
 def check_me(db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
     admin = db.query(models.Admin).filter(models.Admin.telegram_user_id == user["id"]).first()
-    if admin:
-        return {"is_admin": True, "user_id": user["id"], "full_name": admin.full_name}
+    if admin or is_configured_admin(user["id"]):
+        return {"is_admin": True, "user_id": user["id"], "full_name": admin.full_name if admin else None}
     return {"is_admin": False, "user_id": user["id"]}
 
 @router.get("", response_model=list[schemas.AdminOut])

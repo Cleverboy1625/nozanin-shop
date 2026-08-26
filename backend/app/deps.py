@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from .database import get_db
 from .telegram_verify import verify_init_data
 from . import models
-from .config import settings
+from .config import is_configured_admin
 
 
 def get_current_user(x_telegram_init_data: str = Header(default="")):
@@ -16,6 +16,6 @@ def get_current_user(x_telegram_init_data: str = Header(default="")):
 
 def require_admin(user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     admin = db.query(models.Admin).filter(models.Admin.telegram_user_id == user["id"]).first()
-    if not admin:
+    if not admin and not is_configured_admin(user["id"]):
         raise HTTPException(status_code=403, detail="Bu amal faqat administratorlar uchun")
     return user
