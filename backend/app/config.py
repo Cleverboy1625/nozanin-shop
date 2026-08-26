@@ -18,6 +18,13 @@ def _env_str(name: str, default: str = "") -> str:
         return default
     return str(value).strip()
 
+
+def _webapp_url() -> str:
+    value = _env_str("WEBAPP_URL", "https://nozanin-shoping.onrender.com").rstrip("/")
+    if not value.startswith("https://") or "your-render" in value or "example.com" in value:
+        return "https://nozanin-shoping.onrender.com"
+    return value
+
 DEFAULT_DATABASE_URL = f"sqlite:///{os.path.join(BACKEND_DIR, 'nozanin.db')}"
 DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_DATABASE_URL)
 if DATABASE_URL == "sqlite:///./nozanin.db":
@@ -26,7 +33,7 @@ if DATABASE_URL == "sqlite:///./nozanin.db":
 class Settings:
     BOT_TOKEN: str = _env_str("BOT_TOKEN", "")
     DATABASE_URL: str = DATABASE_URL
-    WEBAPP_URL: str = _env_str("WEBAPP_URL", "https://nozanin-shoping.onrender.com").rstrip("/")
+    WEBAPP_URL: str = _webapp_url()
     ADMIN_TELEGRAM_IDS: str = _env_csv("ADMIN_TELEGRAM_IDS", "")  # vergul bilan ajratilgan
     PRODUCT_CHAT_IDS: str = _env_csv("PRODUCT_CHAT_IDS", "")  # kanal/gruppa ID yoki @username
     DAILY_REPORT_HOUR: int = int(_env_str("DAILY_REPORT_HOUR", "21"))
