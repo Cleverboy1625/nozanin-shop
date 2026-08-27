@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 services:
   - type: web
     name: nozanin-web
@@ -14,15 +15,78 @@ services:
         sync: false
       - key: CORS_ORIGINS
         sync: false
+=======
+envVarGroups:
+  # Ikki servis uchun bitta joyda saqlanadigan secret va sozlamalar.
+  - name: nozanin-common
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: WEBAPP_URL
+        sync: false
+>>>>>>> 4627995 (Configure Render services and PostgreSQL)
       - key: ADMIN_TELEGRAM_IDS
         sync: false
       - key: PRODUCT_CHAT_IDS
         sync: false
+<<<<<<< HEAD
+=======
+      - key: TIMEZONE
+        value: Asia/Tashkent
+>>>>>>> 4627995 (Configure Render services and PostgreSQL)
       - key: DAILY_REPORT_HOUR
         value: "21"
       - key: DAILY_REPORT_MINUTE
         value: "0"
+<<<<<<< HEAD
       - key: TIMEZONE
         value: Asia/Tashkent
       - key: WEBHOOK_SECRET
         generateValue: true
+=======
+
+services:
+  # Frontend va FastAPI API bitta public URL orqali beriladi.
+  - type: web
+    runtime: docker
+    name: nozanin-api
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - fromGroup: nozanin-common
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nozanin-db
+          property: connectionString
+      - key: WEBHOOK_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: "*"
+
+  # Render Web Service sifatida ishlaydi: health endpoint + Telegram polling.
+  - type: web
+    runtime: docker
+    name: nozanin-bot
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./backend/Dockerfile.bot.web
+    dockerContext: ./backend
+    healthCheckPath: /api/health
+    envVars:
+      - fromGroup: nozanin-common
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nozanin-db
+          property: connectionString
+
+databases:
+  - name: nozanin-db
+    plan: free
+    region: frankfurt
+    databaseName: nozanin
+    user: nozanin
+    postgresMajorVersion: "18"
+>>>>>>> 4627995 (Configure Render services and PostgreSQL)

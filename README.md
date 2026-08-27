@@ -71,7 +71,42 @@ docker compose up -d --build
 Bu backend API (`:8000`), bot va frontend (`:8080`) ni birga ishga tushiradi.
 Productionda `docker-compose.yml` dagi portlarni Nginx orqali HTTPS bilan oching (`nginx/nozanin.conf` namuna sifatida berilgan).
 
-## 4.1 PythonAnywhere'ga joylash
+## 4.1 Render'ga joylash (2 ta Web Service + PostgreSQL)
+
+Repository root'ida `render.yaml` tayyor: u quyidagilarni bir vaqtda yaratadi:
+
+1. `nozanin-api` — FastAPI va Mini App frontend (bitta public URL);
+2. `nozanin-bot` — Telegram bot polling xizmati (health endpoint bilan Web Service);
+3. `nozanin-db` — ikkala servis foydalanadigan Render PostgreSQL bazasi.
+
+Render Dashboard'da **New → Blueprint** ni tanlab repository'ni ulang va `render.yaml`ni deploy qiling.
+Deploy oynasida `nozanin-common` environment group uchun quyidagi qiymatlarni kiriting:
+
+```text
+BOT_TOKEN=BotFather tokeni
+ADMIN_TELEGRAM_IDS=5019578020
+WEBAPP_URL=https://nozanin-api.onrender.com
+PRODUCT_CHAT_IDS=
+```
+
+`WEBAPP_URL` qiymatini `nozanin-api` deploy bo'lgach Render bergan haqiqiy URL bilan almashtiring va
+**Save changes → Manual Deploy** qiling. `DATABASE_URL`ni kiritmang — u `render.yaml` orqali Render
+PostgreSQL internal connection string'iga avtomatik ulanadi.
+
+Bu konfiguratsiyada bot **polling** rejimida ishlaydi. Shuning uchun avval webhook o'rnatilgan bo'lsa,
+bot yangi deploy paytida uni avtomatik o'chiradi; `set_webhook.py`ni Render uchun ishlatmang.
+
+So'ng BotFather → **Bot Settings → Menu Button** orqali `WEBAPP_URL` manzilini kiriting. Tekshirish uchun:
+
+```text
+https://SIZNING-API-URL/api/health
+https://SIZNING-BOT-URL/api/health
+```
+
+ikkalasi ham `{"status":"ok", ...}` qaytarishi kerak. Render'ning free Web Service'i uxlab qolishi
+mumkin; Telegram botning 24/7 ishlashi uchun Render'da pullik `starter` yoki undan yuqori plan tanlang.
+
+## 4.2 PythonAnywhere'ga joylash
 
 PythonAnywhere'da **Web app** oching va Python 3.11 virtual environment yarating:
 
@@ -113,7 +148,7 @@ Frontend'ni HTTPS static hostingga joylab, `frontend/index.html` ichidagi `API_B
 `https://USERNAME.pythonanywhere.com` manziliga o'zgartiring. BotFather'dagi Menu Button URL sifatida
 frontend HTTPS manzilini kiriting. Web app'ni Reload qilgandan so'ng botga `/start` yuborib tekshiring.
 
-## 4.2 Hugging Face Spaces'ga joylash
+## 4.3 Hugging Face Spaces'ga joylash
 
 Repository root'ida Hugging Face uchun tayyor `Dockerfile` bor. Hugging Face'da yangi **Docker Space**
 oching va repository'ni ulang yoki kodni push qiling. Space sozlamalaridagi **Settings → Variables and secrets**
