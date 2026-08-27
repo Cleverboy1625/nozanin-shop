@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Mahliyo Admin</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; background: #f5f5f8; color: #1d1d25; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .card { background: white; border-radius: 16px; padding: 18px; box-shadow: 0 6px 20px rgba(0,0,0,.05); margin-bottom: 18px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 16px; }
+    .stat { background: #f5f0ff; border-radius: 12px; padding: 16px; }
+    .stat .num { font-size: 28px; font-weight: 800; color: #5b34d5; }
+    .muted { color: #666b7a; }
+    input, select, button, textarea { font: inherit; }
+    input, textarea, select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 10px; margin-top: 8px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    button { background: #5b34d5; color: white; border: 0; border-radius: 10px; padding: 10px 14px; font-weight: 700; cursor: pointer; }
+    .btn-secondary { background: #fff; color: #5b34d5; border: 1px solid #5b34d5; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px 8px; border-bottom: 1px solid #eee; text-align: left; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>Mahliyo Admin</h1>
+      <a href="/" style="color:#5b34d5;font-weight:700;text-decoration:none;">Back to shop</a>
+    </div>
+
+    <div class="grid">
+      <div class="stat"><div class="muted">Today orders</div><div class="num" id="ordersCount">0</div></div>
+      <div class="stat"><div class="muted">Revenue</div><div class="num" id="revenue">0 so'm</div></div>
+      <div class="stat"><div class="muted">Views</div><div class="num" id="views">0</div></div>
+      <div class="stat"><div class="muted">Promo codes</div><div class="num" id="promoCount">0</div></div>
+    </div>
+
+    <div class="card">
+      <h3>Add promo</h3>
+      <div class="row">
+        <div><input id="promoCode" placeholder="PROMO10" /></div>
+        <div><select id="promoType"><option value="percent">Percent</option><option value="fixed">Fixed</option></select></div>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <div><input id="promoValue" type="number" placeholder="10" /></div>
+        <div><input id="promoMin" type="number" placeholder="Min order total" /></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;">
+        <button id="createPromoBtn">Create promo</button>
+        <button class="btn-secondary" id="refreshBtn">Refresh</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Recent orders</h3>
+      <div id="ordersTable"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+    const initData = window.Telegram?.WebApp?.initData || '';
+
+    async function api(path, options = {}) {
+      const headers = { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': initData, ...(options.headers || {}) };
+      const res = await fetch(API_BASE + path, { ...options, headers });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || 'Request failed');
+      }
+      return res.status === 204 ? null : res.json();
+    }
+
+    function money(n) { return Number(n || 0).toLocaleString('ru-RU').replace(/,/g, ' ') + ' so\'m'; }
+
+    async function loadStats() {
+      try {
+        const stats = await api('/api/stats/today');
+        document.getElementById('ordersCount').textContent = stats.orders_count || 0;
+        document.getElementById('revenue').textContent = money(stats.revenue || 0);
+        document.getElementById('views').textContent = stats.report_text ? (stats.report_text.match(/Buyurtmalar soni:/g) || []).length : 0;
+      } catch (e) {
+        console.warn(e);
+      }
+
+      try {
+        const promos = await api('/api/promos');
+        document.getElementById('promoCount').textContent = promos.length || 0;
+      } catch (e) {
+        console.warn(e);
+      }
+
+      try {
+        const orders = await api('/api/orders');
+        const rows = orders.slice(0, 10).map(o => `
+          <tr>
+            <td>#${String(o.id).slice(0, 8)}</td>
+            <td>${o.customer_name}</td>
+            <td>${o.total}</td>
+            <td>${o.status}</td>
+          </tr>
+        `).join('');
+        document.getElementById('ordersTable').innerHTML = '<table><thead><tr><th>ID</th><th>Name</th><th>Total</th><th>Status</th></tr></thead><tbody>' + rows + '</tbody></table>';
+      } catch (e) {
+        document.getElementById('ordersTable').innerHTML = '<div class="muted">Orders unavailable</div>';
+      }
+    }
+
+    document.getElementById('refreshBtn').onclick = loadStats;
+    document.getElementById('createPromoBtn').onclick = async () => {
+      const payload = {
+        code: document.getElementById('promoCode').value.trim(),
+        discount_type: document.getElementById('promoType').value,
+        discount_value: Number(document.getElementById('promoValue').value || 0),
+        min_order_total: Number(document.getElementById('promoMin').value || 0),
+        active: true,
+        usage_limit: null,
+      };
+      if (!payload.code) return alert('Promo code required');
+      await api('/api/promos', { method: 'POST', body: JSON.stringify(payload) });
+      loadStats();
+    };
+
+    loadStats();
+  </script>
+</body>
+</html>

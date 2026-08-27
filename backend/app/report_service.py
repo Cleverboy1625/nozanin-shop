@@ -5,6 +5,7 @@ from sqlalchemy import func
 import httpx
 from . import models
 from .config import settings, get_product_chat_ids
+from pathlib import Path
 
 
 def money(n: int) -> str:
@@ -63,6 +64,45 @@ def build_daily_report(db: Session, day: date) -> dict:
 def send_telegram_message(chat_id, text: str) -> bool:
     if not settings.BOT_TOKEN:
         return False
+
+
+def _brand_banner_path():
+    path = Path(__file__).resolve().parents[2] / "frontend" / "product-images" / "mahliyo-banner.jpg"
+    return path if path.is_file() else None
+
+
+def send_brand_banner(chat_id) -> bool:
+    if not settings.BOT_TOKEN:
+        return False
+    caption = (
+        "🌸 <b>Mahliyo</b> 🌸\n\n"
+        "Ayollar kiyimi va nafis parfyumeriya do'koni.\n"
+        "Yangi uslub, yangi kayfiyat.\n\n"
+        "🛍 Sevimli mahsulotingizni tanlang va buyurtma bering."
+    )
+    payload = {"chat_id": chat_id, "caption": caption, "parse_mode": "HTML"}
+    banner_path = _brand_banner_path()
+    try:
+        if banner_path:
+            with banner_path.open("rb") as image:
+                response = httpx.post(
+                    f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendPhoto",
+                    data=payload,
+                    files={"photo": (banner_path.name, image, "image/jpeg")},
+                    timeout=20,
+                )
+        elif settings.BRAND_BANNER_URL:
+            payload["photo"] = settings.BRAND_BANNER_URL
+            response = httpx.post(
+                f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendPhoto",
+                json=payload,
+                timeout=20,
+            )
+        else:
+            return send_telegram_message(chat_id, caption.replace("<b>", "").replace("</b>", ""))
+        return response.status_code == 200
+    except httpx.HTTPError:
+        return False
     url = f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendMessage"
     try:
         r = httpx.post(url, json={"chat_id": chat_id, "text": text}, timeout=10)
@@ -82,6 +122,8 @@ def send_product_post(product) -> int:
     colors = sorted({"Oq" if variant.color == "#ffffff" else "Ko'k" if variant.color == "#2563eb" else variant.color for variant in product.variants if variant.color})
     colors_text = ", ".join(colors) or "Ko'rsatilmagan"
     variants_text = ", ".join(variants) or "Ko'rsatilmagan"
+    stock_text = ", ".join(f"{variant.label}: {variant.stock_qty} dona" for variant in product.variants)
+    stock_display = stock_text or "Ko'rsatilmagan"
     caption = (
         f"🛍 Yangi mahsulot\n\n"
         f"{product.name}\n"
@@ -89,6 +131,7 @@ def send_product_post(product) -> int:
         f"💰 Narx: {money(min(prices))} - {money(max(prices))}\n"
         f"🎨 Ranglar: {colors_text}\n"
         f"📏 O'lchamlar: {variants_text}\n\n"
+        f"📦 Zaxira: {stock_display}\n\n"
         f"Buyurtma berish uchun do'konni oching."
     )
     sent = 0
@@ -96,7 +139,18 @@ def send_product_post(product) -> int:
     image_url = f"{base_url}{product.image_url}" if product.image_url and product.image_url.startswith("/") else product.image_url
     for chat_id in chat_ids:
         try:
-            if image_url:
+            local_image = None
+            if product.image_url and product.image_url.startswith("/"):
+                local_image = Path(__file__).resolve().parents[2] / "frontend" / product.image_url.lstrip("/")
+            if local_image and local_image.is_file():
+                with local_image.open("rb") as image:
+                    response = httpx.post(
+                        f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendPhoto",
+                        data={"chat_id": chat_id, "caption": caption},
+                        files={"photo": (local_image.name, image, "image/jpeg")},
+                        timeout=20,
+                    )
+            elif image_url:
                 response = httpx.post(
                     f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendPhoto",
                     json={"chat_id": chat_id, "photo": image_url, "caption": caption},
@@ -119,6 +173,25 @@ def notify_admins(db: Session, text: str):
     admins = db.query(models.Admin).all()
     for a in admins:
         send_telegram_message(a.telegram_user_id, text)
+
+
+LOW_STOCK_THRESHOLD = 3
+
+
+def notify_low_stock_admins(db: Session, low_stock_items):
+    """Zaxira kamaygan variantlar ro'yxatini adminlarga Telegram orqali yuboradi."""
+    if not low_stock_items:
+        return
+    lines = ["⚠️ Ombor zaxirasi kamaymoqda:\n"]
+    seen = set()
+    for item in low_stock_items:
+        key = (item["product_name"], item["variant_label"])
+        if key in seen:
+            continue
+        seen.add(key)
+        lines.append(f"• {item['product_name']} ({item['variant_label']}) — {item['stock_qty']} dona qoldi")
+    text = "\n".join(lines)
+    notify_admins(db, text)
 
 
 def send_daily_report_to_admins(db: Session):

@@ -32,6 +32,7 @@ if DATABASE_URL == "sqlite:///./nozanin.db":
 
 class Settings:
     BOT_TOKEN: str = _env_str("BOT_TOKEN", "")
+    USE_WEBHOOK: bool = _env_str("USE_WEBHOOK", "false").lower() in {"1", "true", "yes", "on"}
     DATABASE_URL: str = DATABASE_URL
     WEBAPP_URL: str = _webapp_url()
     ADMIN_TELEGRAM_IDS: str = _env_csv("ADMIN_TELEGRAM_IDS", "")  # vergul bilan ajratilgan
@@ -41,6 +42,7 @@ class Settings:
     TIMEZONE: str = _env_str("TIMEZONE", "Asia/Tashkent")
     CORS_ORIGINS: str = _env_str("CORS_ORIGINS", "*")
     WEBHOOK_SECRET: str = _env_str("WEBHOOK_SECRET", "")
+    BRAND_BANNER_URL: str = _env_str("BRAND_BANNER_URL", "")
 
 settings = Settings()
 

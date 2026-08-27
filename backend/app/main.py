@@ -10,13 +10,13 @@ from .database import Base, engine, SessionLocal
 from . import models
 from .config import settings, get_admin_ids_from_env
 from .report_service import send_daily_report_to_admins
-from .routers import products, orders, stats, admins
+from .routers import products, orders, stats, admins, favorites, promos, analytics, cart, notifications, loyalty, search, content
 from bot.bot import bot, dp
 from aiogram.types import Update
 from seed_products import seed as seed_products
 
 logger = logging.getLogger(__name__)
-app = FastAPI(title="Nozanin Shop API")
+app = FastAPI(title="Mahliyo Shop API")
 
 origins = [origin.strip() for origin in settings.CORS_ORIGINS.split(",") if origin.strip()] if settings.CORS_ORIGINS != "*" else ["*"]
 if not origins:
@@ -33,8 +33,17 @@ app.include_router(products.router)
 app.include_router(orders.router)
 app.include_router(stats.router)
 app.include_router(admins.router)
+app.include_router(favorites.router)
+app.include_router(promos.router)
+app.include_router(analytics.router)
+app.include_router(cart.router)
+app.include_router(notifications.router)
+app.include_router(loyalty.router)
+app.include_router(search.router)
+app.include_router(content.router)
 
 scheduler = BackgroundScheduler(timezone=settings.TIMEZONE)
+_INITIALIZED = False
 
 
 def seed_admins():
@@ -49,6 +58,20 @@ def seed_admins():
         db.close()
 
 
+def seed_content():
+    db = SessionLocal()
+    try:
+        defaults = [("Kiyimlar", "kiyim", "👗"), ("Parfyum", "parfyum", "🌸")]
+        for name, slug, icon in defaults:
+            if not db.query(models.Category).filter(models.Category.slug == slug).first():
+                db.add(models.Category(name=name, slug=slug, icon=icon))
+        if not db.query(models.HeroBanner).filter(models.HeroBanner.active == 1).first():
+            db.add(models.HeroBanner(title="Yangi uslub, yangi kayfiyat", subtitle="Sevimli kiyim va iforlarni bir joydan tanlang."))
+        db.commit()
+    finally:
+        db.close()
+
+
 def scheduled_daily_report():
     db = SessionLocal()
     try:
@@ -58,9 +81,15 @@ def scheduled_daily_report():
 
 
 def initialize_app():
+    global _INITIALIZED
+    if _INITIALIZED:
+        return
+
     Base.metadata.create_all(bind=engine)
+    migrate_legacy_schema()
     seed_products()
     seed_admins()
+    seed_content()
     if not scheduler.running:
         scheduler.add_job(
             scheduled_daily_report,
@@ -69,11 +98,24 @@ def initialize_app():
             replace_existing=True,
         )
         scheduler.start()
+    _INITIALIZED = True
+
+
+def migrate_legacy_schema():
+    if engine.dialect.name != "sqlite":
+        return
+    with engine.begin() as connection:
+        columns = {row[1] for row in connection.exec_driver_sql("PRAGMA table_info(admins)")}
+        if "role" not in columns:
+            connection.exec_driver_sql("ALTER TABLE admins ADD COLUMN role VARCHAR NOT NULL DEFAULT 'admin'")
 
 
 async def configure_telegram_webhook():
     if not settings.BOT_TOKEN:
         logger.warning("BOT_TOKEN sozlanmagan, Telegram webhook o'rnatilmadi")
+        return
+    if not settings.USE_WEBHOOK:
+        logger.info("USE_WEBHOOK=false: Telegram webhook o'rnatilmadi; polling rejimi kutilmoqda")
         return
     webhook_url = f"{settings.WEBAPP_URL}/telegram/webhook"
     try:
@@ -127,5 +169,3 @@ frontend_candidates = (
 frontend_dir = next((path for path in frontend_candidates if path.is_dir()), None)
 if frontend_dir:
     app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
-
-initialize_app()

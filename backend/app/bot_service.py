@@ -34,7 +34,7 @@ async def lifespan(_: FastAPI):
         await bot.session.close()
 
 
-app = FastAPI(title="Nozanin Telegram Bot", lifespan=lifespan)
+app = FastAPI(title="Mahliyo Telegram Bot", lifespan=lifespan)
 
 
 @app.get("/api/health")
