@@ -1,52 +1,22 @@
-<<<<<<< HEAD
-services:
-  - type: web
-    name: nozanin-web
-    runtime: docker
-    rootDir: .
-    dockerfilePath: ./Dockerfile
-    healthCheckPath: /healthz
-    envVars:
-      - key: BOT_TOKEN
-        sync: false
-      - key: DATABASE_URL
-        value: sqlite:////app/nozanin.db
-      - key: WEBAPP_URL
-        sync: false
-      - key: CORS_ORIGINS
-        sync: false
-=======
 envVarGroups:
-  # Ikki servis uchun bitta joyda saqlanadigan secret va sozlamalar.
   - name: nozanin-common
     envVars:
       - key: BOT_TOKEN
         sync: false
       - key: WEBAPP_URL
         sync: false
->>>>>>> 4627995 (Configure Render services and PostgreSQL)
       - key: ADMIN_TELEGRAM_IDS
         sync: false
       - key: PRODUCT_CHAT_IDS
         sync: false
-<<<<<<< HEAD
-=======
       - key: TIMEZONE
         value: Asia/Tashkent
->>>>>>> 4627995 (Configure Render services and PostgreSQL)
       - key: DAILY_REPORT_HOUR
         value: "21"
       - key: DAILY_REPORT_MINUTE
         value: "0"
-<<<<<<< HEAD
-      - key: TIMEZONE
-        value: Asia/Tashkent
-      - key: WEBHOOK_SECRET
-        generateValue: true
-=======
 
 services:
-  # Frontend va FastAPI API bitta public URL orqali beriladi.
   - type: web
     runtime: docker
     name: nozanin-api
@@ -66,7 +36,6 @@ services:
       - key: CORS_ORIGINS
         value: "*"
 
-  # Render Web Service sifatida ishlaydi: health endpoint + Telegram polling.
   - type: web
     runtime: docker
     name: nozanin-bot
@@ -89,4 +58,3 @@ databases:
     databaseName: nozanin
     user: nozanin
     postgresMajorVersion: "18"
->>>>>>> 4627995 (Configure Render services and PostgreSQL)
